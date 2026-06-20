@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Admin Panel — Attendance</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg:#f4f3ff; --card:#fff; --border:#e0dfff;
+    --accent:#6c63ff; --accent2:#ff6584; --green:#00c853;
+    --red:#ff5252; --text:#1a1a2e; --muted:#888; --radius:16px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;}
+
+  /* login */
+  #loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;}
+  .login-box{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:40px 36px;width:100%;max-width:380px;text-align:center;box-shadow:0 20px 60px #6c63ff15;}
+  .login-box .logo{font-size:40px;margin-bottom:12px;}
+  .login-box h1{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:6px;}
+  .login-box p{font-size:13px;color:var(--muted);margin-bottom:28px;}
+  .inp{width:100%;padding:14px 16px;border:2px solid var(--border);border-radius:12px;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;transition:.2s;}
+  .inp:focus{border-color:var(--accent);}
+  .login-btn{width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-family:'Syne',sans-serif;font-size:16px;font-weight:700;cursor:pointer;margin-top:14px;transition:.2s;}
+  .login-btn:hover{background:#5a52e0;}
+  .err{color:var(--red);font-size:13px;margin-top:10px;}
+
+  /* dashboard */
+  #dashboard{display:none;}
+  .topbar{background:var(--accent);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;}
+  .topbar h1{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:#fff;}
+  .logout-btn{background:rgba(255,255,255,.2);color:#fff;border:none;padding:8px 16px;border-radius:10px;cursor:pointer;font-family:'Syne',sans-serif;font-weight:600;font-size:13px;}
+
+  .container{max-width:1100px;margin:0 auto;padding:28px 20px;}
+
+  /* stats */
+  .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:28px;}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center;}
+  .stat-num{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--accent);}
+  .stat-label{font-size:12px;color:var(--muted);margin-top:4px;letter-spacing:1px;text-transform:uppercase;}
+
+  /* section */
+  .section{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:24px;overflow:hidden;}
+  .section-head{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+  .section-head h2{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;}
+  .section-body{padding:20px 22px;}
+
+  /* register device form */
+  .reg-form{display:flex;gap:10px;flex-wrap:wrap;}
+  .reg-form .inp{flex:1;min-width:180px;}
+  .reg-btn{padding:13px 22px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap;}
+  .reg-btn:hover{background:#5a52e0;}
+
+  /* device table */
+  .tbl{width:100%;border-collapse:collapse;}
+  .tbl th{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:600;padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);}
+  .tbl td{padding:12px 12px;font-size:14px;border-bottom:1px solid #f0f0ff;vertical-align:middle;}
+  .tbl tr:last-child td{border-bottom:none;}
+  .tbl tr:hover td{background:#f8f7ff;}
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
+  .badge-in{background:#e8fff4;color:#00c853;}
+  .badge-out{background:#fff0f3;color:#ff5252;}
+  .badge-reg{background:#f0f0ff;color:var(--accent);}
+  .del-btn{background:none;border:1px solid var(--red);color:var(--red);padding:5px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;}
+  .del-btn:hover{background:var(--red);color:#fff;}
+
+  /* filter row */
+  .filter-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+  .filter-row .inp{max-width:200px;}
+  .export-btn{padding:10px 18px;background:var(--green);color:#fff;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;cursor:pointer;}
+
+  /* loading */
+  .loading{text-align:center;padding:30px;color:var(--muted);}
+  .spinner{display:inline-block;width:24px;height:24px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* empty */
+  .empty{text-align:center;padding:30px;color:var(--muted);font-size:14px;}
+
+  /* toast */
+  .toast{position:fixed;bottom:24px;right:24px;padding:14px 20px;border-radius:12px;font-size:14px;font-weight:500;z-index:999;transition:.3s;transform:translateY(80px);opacity:0;}
+  .toast.show{transform:translateY(0);opacity:1;}
+  .toast.success{background:#e8fff4;border:1px solid var(--green);color:#00a040;}
+  .toast.error{background:#fff0f3;border:1px solid var(--red);color:var(--red);}
+
+  @media(max-width:600px){
+    .filter-row .inp{max-width:100%;}
+    .tbl{font-size:12px;}
+    .tbl td,.tbl th{padding:8px 8px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="logo">🔐</div>
+    <h1>Admin Panel</h1>
+    <p>Attendance Management System</p>
+    <input class="inp" type="password" id="pwdInput" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button class="login-btn" onclick="doLogin()">Login →</button>
+    <div class="err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <div class="topbar">
+    <h1>📊 Attendance Admin</h1>
+    <button class="logout-btn" onclick="doLogout()">Logout</button>
+  </div>
+  <div class="container">
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-num" id="statTotal">—</div><div class="stat-label">Total Records</div></div>
+      <div class="stat-card"><div class="stat-num" id="statToday">—</div><div class="stat-label">Today Present</div></div>
+      <div class="stat-card"><div class="stat-num" id="statDevices">—</div><div class="stat-label">Registered Devices</div></div>
+    </div>
+
+    <!-- Register Device -->
+    <div class="section">
+      <div class="section-head">
+        <h2>📱 Register New Device</h2>
+      </div>
+      <div class="section-body">
+        <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">Get the Device ID from the employee's phone (shown on their attendance screen), paste it here with their name.</p>
+        <div class="reg-form">
+          <input class="inp" id="newDeviceId" placeholder="Paste Device ID (e.g. DEV-AB12CD-...)"/>
+          <input class="inp" id="newName" placeholder="Employee Name"/>
+          <button class="reg-btn" onclick="registerDevice()">➕ Register</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Devices List -->
+    <div class="section">
+      <div class="section-head"><h2>👥 Registered Employees</h2></div>
+      <div class="section-body" id="devicesBody">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- Attendance Records -->
+    <div class="section">
+      <div class="section-head">
+        <h2>📋 Attendance Records</h2>
+        <button class="export-btn" onclick="exportCSV()">⬇️ Export CSV</button>
+      </div>
+      <div class="section-body">
+        <div class="filter-row">
+          <input class="inp" id="filterDate" type="date" onchange="loadAttendance()"/>
+          <input class="inp" id="filterName" placeholder="Filter by name" oninput="loadAttendance()"/>
+          <button class="export-btn" style="background:#6c63ff" onclick="clearFilters()">Clear Filters</button>
+        </div>
+        <div id="attendanceBody">
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// ⚙️  CONFIGURATION
+// ============================================================
+const SCRIPT_URL  = "https://script.google.com/macros/s/AKfycbyGXEg4E7XMyH5F1Sq5pRRP0v5vdIzkWLnGWIfqb1SMEsyvhT7abC7vrjrTGVfYLNtPRA/exec"; // same URL as index.html
+const ADMIN_PASS  = "admin123"; // 🔒 CHANGE THIS PASSWORD
+// ============================================================
+
+let allAttendance = [];
+let allDevices    = [];
+
+function doLogin() {
+  const pwd = document.getElementById("pwdInput").value;
+  if (pwd === ADMIN_PASS) {
+    sessionStorage.setItem("att_admin", "yes");
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("dashboard").style.display   = "block";
+    loadAll();
+  } else {
+    document.getElementById("loginErr").textContent = "Wrong password!";
+  }
+}
+
+function doLogout() {
+  sessionStorage.removeItem("att_admin");
+  location.reload();
+}
+
+// auto-login if session exists
+if (sessionStorage.getItem("att_admin") === "yes") {
+  document.getElementById("loginScreen").style.display = "none";
+  document.getElementById("dashboard").style.display   = "block";
+  loadAll();
+}
+
+async function loadAll() {
+  await Promise.all([loadDevices(), loadAttendance()]);
+}
+
+// ── Load Devices ───────────────────────────────────────────
+async function loadDevices() {
+  try {
+    const res  = await fetch(`${SCRIPT_URL}?action=getDevices`);
+    const data = await res.json();
+    allDevices = data.devices || [];
+    document.getElementById("statDevices").textContent = allDevices.length;
+    renderDevices();
+  } catch(e) {
+    document.getElementById("devicesBody").innerHTML = `<div class="empty">⚠️ Could not load. Check SCRIPT_URL.</div>`;
+  }
+}
+
+function renderDevices() {
+  const el = document.getElementById("devicesBody");
+  if (!allDevices.length) { el.innerHTML = `<div class="empty">No devices registered yet.</div>`; return; }
+  el.innerHTML = `<table class="tbl">
+    <thead><tr><th>Name</th><th>Device ID</th><th>Registered On</th><th></th></tr></thead>
+    <tbody>${allDevices.map(d => `
+      <tr>
+        <td><strong>${d.name}</strong></td>
+        <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${d.deviceId}</td>
+        <td>${d.registeredOn || "—"}</td>
+        <td><button class="del-btn" onclick="deleteDevice('${d.deviceId}')">Remove</button></td>
+      </tr>`).join("")}
+    </tbody></table>`;
+}
+
+// ── Register Device ────────────────────────────────────────
+async function registerDevice() {
+  const deviceId = document.getElementById("newDeviceId").value.trim();
+  const name     = document.getElementById("newName").value.trim();
+  if (!deviceId || !name) { showToast("Fill both fields!", "error"); return; }
+
+  try {
+    const res  = await fetch(SCRIPT_URL, {
+      method:"POST",
+      body: JSON.stringify({ action:"registerDevice", deviceId, name,
+        registeredOn: new Date().toLocaleDateString("en-IN") })
+    });
+    const data = await res.json();
+    if (data.status === "ok") {
+      showToast(`✅ ${name} registered!`, "success");
+      document.getElementById("newDeviceId").value = "";
+      document.getElementById("newName").value     = "";
+      await loadDevices();
+    } else { showToast(data.message || "Error", "error"); }
+  } catch(e) { showToast("Network error", "error"); }
+}
+
+// ── Delete Device ──────────────────────────────────────────
+async function deleteDevice(deviceId) {
+  if (!confirm("Remove this device?")) return;
+  try {
+    const res  = await fetch(SCRIPT_URL, { method:"POST", body: JSON.stringify({ action:"deleteDevice", deviceId }) });
+    const data = await res.json();
+    if (data.status === "ok") { showToast("Removed!", "success"); await loadDevices(); }
+  } catch(e) { showToast("Error", "error"); }
+}
+
+// ── Load Attendance ────────────────────────────────────────
+async function loadAttendance() {
+  document.getElementById("attendanceBody").innerHTML = `<div class="loading"><div class="spinner"></div></div>`;
+  try {
+    const res  = await fetch(`${SCRIPT_URL}?action=getAttendance`);
+    const data = await res.json();
+    allAttendance = data.records || [];
+
+    // filter
+    const fDate = document.getElementById("filterDate").value;
+    const fName = document.getElementById("filterName").value.toLowerCase();
+    let filtered = allAttendance;
+    if (fDate) {
+      const d = new Date(fDate).toLocaleDateString("en-IN");
+      filtered = filtered.filter(r => r.date === d);
+    }
+    if (fName) filtered = filtered.filter(r => r.name.toLowerCase().includes(fName));
+
+    // stats
+    const today = new Date().toLocaleDateString("en-IN");
+    document.getElementById("statTotal").textContent = allAttendance.length;
+    document.getElementById("statToday").textContent = allAttendance.filter(r => r.date === today).length;
+
+    renderAttendance(filtered);
+  } catch(e) {
+    document.getElementById("attendanceBody").innerHTML = `<div class="empty">⚠️ Could not load. Check SCRIPT_URL.</div>`;
+  }
+}
+
+function renderAttendance(records) {
+  const el = document.getElementById("attendanceBody");
+  if (!records.length) { el.innerHTML = `<div class="empty">No records found.</div>`; return; }
+  const sorted = [...records].sort((a,b) => new Date(b.date) - new Date(a.date));
+  el.innerHTML = `<table class="tbl">
+    <thead><tr><th>Name</th><th>Date</th><th>Check-In</th><th>Check-Out</th><th>Office</th><th>Status</th></tr></thead>
+    <tbody>${sorted.map(r => `
+      <tr>
+        <td><strong>${r.name}</strong></td>
+        <td>${r.date}</td>
+        <td>${r.checkin || "—"}</td>
+        <td>${r.checkout || "—"}</td>
+        <td>${r.office || "—"}</td>
+        <td><span class="badge ${r.checkout ? 'badge-out' : 'badge-in'}">${r.checkout ? "Complete" : "Checked In"}</span></td>
+      </tr>`).join("")}
+    </tbody></table>`;
+}
+
+function clearFilters() {
+  document.getElementById("filterDate").value = "";
+  document.getElementById("filterName").value = "";
+  loadAttendance();
+}
+
+// ── Export CSV ─────────────────────────────────────────────
+function exportCSV() {
+  if (!allAttendance.length) { showToast("No data to export", "error"); return; }
+  const rows = [["Name","Date","Check-In","Check-Out","Office"]];
+  allAttendance.forEach(r => rows.push([r.name,r.date,r.checkin||"",r.checkout||"",r.office||""]));
+  const csv = rows.map(r => r.join(",")).join("\n");
+  const a   = document.createElement("a");
+  a.href    = "data:text/csv," + encodeURIComponent(csv);
+  a.download= "attendance_" + new Date().toISOString().slice(0,10) + ".csv";
+  a.click();
+  showToast("CSV downloaded!", "success");
+}
+
+// ── Toast ──────────────────────────────────────────────────
+function showToast(msg, type="success") {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove("show"), 3000);
+}
+</script>
+</body>
+</html>

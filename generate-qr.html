@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>QR Code Generator — Attendance</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{
+    --bg:#0a0a0f; --card:#13131a; --border:#2a2a3a;
+    --accent:#6c63ff; --accent2:#ff6584; --text:#f0f0ff; --muted:#888899;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;
+       display:flex;align-items:center;justify-content:center;padding:20px;}
+  .wrap{max-width:460px;width:100%;text-align:center;}
+  .eyebrow{font-family:'Syne',sans-serif;font-size:12px;letter-spacing:4px;color:var(--accent);text-transform:uppercase;margin-bottom:8px;}
+  h1{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;margin-bottom:6px;}
+  .sub{font-size:13px;color:var(--muted);margin-bottom:24px;}
+
+  .input-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:20px;margin-bottom:24px;text-align:left;}
+  .input-card label{font-size:12px;color:var(--muted);display:block;margin-bottom:8px;letter-spacing:1px;text-transform:uppercase;}
+  .input-card input{width:100%;padding:13px 14px;background:#0a0a0f;border:1px solid var(--border);
+       border-radius:10px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;margin-bottom:14px;}
+  .input-card input:focus{border-color:var(--accent);}
+  .gen-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));
+       border:none;border-radius:10px;color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:15px;cursor:pointer;}
+  .gen-btn:active{transform:scale(0.98);}
+
+  .qr-card{background:#fff;border-radius:24px;padding:32px;display:none;}
+  .qr-card.show{display:block;}
+  #qrcode{display:flex;justify-content:center;margin-bottom:18px;}
+  .qr-label{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:#1a1a2e;margin-bottom:4px;}
+  .qr-instruction{font-size:12px;color:#666;}
+
+  .actions{display:flex;gap:10px;margin-top:18px;}
+  .action-btn{flex:1;padding:13px;background:var(--card);border:1px solid var(--border);
+       border-radius:10px;color:var(--text);font-family:'Syne',sans-serif;font-weight:700;font-size:13px;cursor:pointer;}
+  .action-btn:hover{border-color:var(--accent);}
+
+  .footer-note{font-size:12px;color:var(--muted);margin-top:24px;line-height:1.7;}
+  .footer-note strong{color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Step 12</div>
+  <h1>Generate Your QR Code</h1>
+  <p class="sub">Paste your live app link below, then print the QR code</p>
+
+  <div class="input-card">
+    <label>Your App Link (from GitHub Pages)</label>
+    <input type="text" id="appUrl" placeholder="https://yourusername.github.io/attendance-app/index.html"/>
+    <button class="gen-btn" onclick="generateQR()">Generate QR Code</button>
+  </div>
+
+  <div class="qr-card" id="qrCard">
+    <div id="qrcode"></div>
+    <div class="qr-label">📍 Scan to Mark Attendance</div>
+    <div class="qr-instruction">Open camera app and point at this code</div>
+  </div>
+
+  <div class="actions" id="actionRow" style="display:none">
+    <button class="action-btn" onclick="downloadQR()">⬇️ Download PNG</button>
+    <button class="action-btn" onclick="window.print()">🖨️ Print</button>
+  </div>
+
+  <p class="footer-note">
+    Print this and stick it on the wall near your office entrance.<br/>
+    <strong>Tip:</strong> Laminate it so it lasts longer outdoors.
+  </p>
+</div>
+
+<script>
+let qr = null;
+
+function generateQR() {
+  const url = document.getElementById("appUrl").value.trim();
+  if (!url || !url.startsWith("http")) {
+    alert("Please paste a valid link starting with https://");
+    return;
+  }
+
+  document.getElementById("qrcode").innerHTML = "";
+  qr = new QRCode(document.getElementById("qrcode"), {
+    text: url,
+    width: 260,
+    height: 260,
+    colorDark: "#1a1a2e",
+    colorLight: "#ffffff",
+    correctLevel: QRCode.CorrectLevel.H
+  });
+
+  document.getElementById("qrCard").classList.add("show");
+  document.getElementById("actionRow").style.display = "flex";
+}
+
+function downloadQR() {
+  const canvas = document.querySelector("#qrcode canvas");
+  if (!canvas) return;
+  const link = document.createElement("a");
+  link.download = "attendance-qr-code.png";
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+}
+</script>
+</body>
+</html>
