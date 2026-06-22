@@ -294,10 +294,25 @@ async function loadAttendance() {
   }
 }
 
-// ── Format time — just return string from Code.gs as-is ───────────────────
+// ── Format time — handle clean strings and fallback 1899 ISO dates ────────
 function formatTime(val) {
   if (!val) return "—";
-  return String(val).replace(/^'/, "").trim();
+  const s = String(val).replace(/^'/, "").trim();
+  // 1899 ISO string means Code.gs Date formatting failed — convert here as fallback
+  if (s.includes("1899-12-30T")) {
+    try {
+      const d = new Date(s);
+      const ist = new Date(d.getTime() + (5.5 * 60 * 60 * 1000));
+      let h = ist.getUTCHours();
+      const m = String(ist.getUTCMinutes()).padStart(2, "0");
+      const sec = String(ist.getUTCSeconds()).padStart(2, "0");
+      const ampm = h >= 12 ? "PM" : "AM";
+      h = h % 12 || 12;
+      return `${h}:${m}:${sec} ${ampm}`;
+    } catch(e) { return s; }
+  }
+  // Already a clean string like "12:52:55 PM" — return directly
+  return s;
 }
 
 function renderAttendance(records) {
