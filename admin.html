@@ -294,12 +294,31 @@ async function loadAttendance() {
   }
 }
 
-// ── Format time — strip apostrophe and show as-is ─────────
+// ── Format time — handles all formats robustly ────────────
 function formatTime(val) {
   if (!val) return "—";
-  // Strip leading apostrophe that Google Sheets uses for plain text
-  if (typeof val === "string") return val.replace(/^'/, "").trim();
-  return String(val);
+  if (typeof val !== "string") val = String(val);
+  // Strip leading apostrophe
+  val = val.replace(/^'/, "").trim();
+  // Already clean like "3:58:35 PM" — return as-is
+  if (val.match(/^\d{1,2}:\d{2}:\d{2}\s*(AM|PM)$/i)) return val;
+  if (val.match(/^\d{1,2}:\d{2}\s*(AM|PM)$/i)) return val;
+  // ISO date like "1899-12-30T10:37:25.000Z" — convert with IST offset
+  if (val.includes("T") || val.includes("1899")) {
+    try {
+      const d = new Date(val);
+      if (!isNaN(d)) {
+        const ist = new Date(d.getTime() + 5.5 * 60 * 60 * 1000);
+        let h = ist.getUTCHours();
+        const m = String(ist.getUTCMinutes()).padStart(2,"0");
+        const s = String(ist.getUTCSeconds()).padStart(2,"0");
+        const ampm = h >= 12 ? "PM" : "AM";
+        h = h % 12 || 12;
+        return `${h}:${m}:${s} ${ampm}`;
+      }
+    } catch(e) {}
+  }
+  return val;
 }
 
 function renderAttendance(records) {
