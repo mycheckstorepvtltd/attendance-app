@@ -285,6 +285,24 @@ function updateButtons() {
   btnOut.disabled = !canAct || !checkedIn || checkedOut;
 }
 
+// ── Format time — fix 1899 Google Sheets date issue ───────
+function formatTime(val) {
+  if (!val) return "—";
+  if (typeof val === "string" && val.includes(":") && !val.includes("T") && !val.includes("1899")) return val;
+  try {
+    const d = new Date(val);
+    if (isNaN(d)) return val;
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    const ist = new Date(d.getTime() + istOffset);
+    let h = ist.getUTCHours();
+    const m = String(ist.getUTCMinutes()).padStart(2,"0");
+    const s = String(ist.getUTCSeconds()).padStart(2,"0");
+    const ampm = h >= 12 ? "PM" : "AM";
+    h = h % 12 || 12;
+    return `${h}:${m}:${s} ${ampm}`;
+  } catch(e) { return val; }
+}
+
 // ── Load Today Status ──────────────────────────────────────
 async function loadTodayStatus() {
   if (!isRegistered) return;
@@ -294,9 +312,9 @@ async function loadTodayStatus() {
     const data = await res.json();
     if (data.status === "ok") {
       todayStatus = data;
-      document.getElementById("todayIn").textContent = data.checkin || "—";
+      document.getElementById("todayIn").textContent = formatTime(data.checkin);
       document.getElementById("todayIn").className = "status-value " + (data.checkin ? "active" : "empty");
-      document.getElementById("todayOut").textContent = data.checkout || "—";
+      document.getElementById("todayOut").textContent = formatTime(data.checkout);
       document.getElementById("todayOut").className = "status-value " + (data.checkout ? "done" : "empty");
       document.getElementById("todayOffice").textContent = data.office || "—";
       document.getElementById("todayOffice").className = "status-value " + (data.office ? "done" : "empty");
