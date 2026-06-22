@@ -294,10 +294,27 @@ async function loadAttendance() {
   }
 }
 
-// ── Format time — just return as-is, Code.gs already formats correctly ────
+// ── Format time — handles both clean strings and 1899 ISO dates from Sheets ──
 function formatTime(val) {
   if (!val) return "—";
-  return String(val).replace(/^'/, "").trim();
+  const s = String(val).replace(/^'/, "").trim();
+  // Clean time string like "12:44:18 PM" — return directly
+  if (/^\d{1,2}:\d{2}:\d{2}\s*(AM|PM)$/i.test(s)) return s.toUpperCase();
+  // Sheets Date object serialized as ISO: "1899-12-30T07:27:05.000Z"
+  // UTC hours/minutes/seconds = actual clock time, do NOT add IST offset
+  if (s.includes("1899") || s.includes("T")) {
+    try {
+      const d = new Date(s);
+      if (isNaN(d)) return s;
+      let h = d.getUTCHours();
+      const m = String(d.getUTCMinutes()).padStart(2, "0");
+      const sec = String(d.getUTCSeconds()).padStart(2, "0");
+      const ampm = h >= 12 ? "PM" : "AM";
+      h = h % 12 || 12;
+      return `${h}:${m}:${sec} ${ampm}`;
+    } catch(e) { return s; }
+  }
+  return s;
 }
 
 function renderAttendance(records) {
