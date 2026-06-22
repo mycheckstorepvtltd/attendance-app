@@ -285,10 +285,12 @@ function updateButtons() {
   btnOut.disabled = !canAct || !checkedIn || checkedOut;
 }
 
-// ── Format time — fix 1899 Google Sheets date issue ───────
+// ── Format time — just clean display ──────────────────────
 function formatTime(val) {
   if (!val) return "—";
-  if (typeof val === "string" && val.includes(":") && !val.includes("T") && !val.includes("1899")) return val;
+  // If it's already a readable time string, return as-is
+  if (typeof val === "string" && !val.includes("T") && !val.includes("1899")) return val;
+  // If it's a Google Sheets ISO date (old bad records), convert with IST offset
   try {
     const d = new Date(val);
     if (isNaN(d)) return val;
