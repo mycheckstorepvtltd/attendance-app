@@ -297,16 +297,18 @@ async function loadAttendance() {
 // ── Format time — handles both "11:22:05 AM" and "1899-12-30T06:00:55.000Z" ──
 function formatTime(val) {
   if (!val) return "—";
-  // Already clean format like "11:22 AM"
-  if (typeof val === "string" && val.includes(":") && !val.includes("T")) return val;
-  // Google Sheets date serial or ISO string
+  // Already clean format like "11:22 AM" — return as is
+  if (typeof val === "string" && val.includes(":") && !val.includes("T") && !val.includes("1899")) return val;
+  // Google Sheets ISO string — convert UTC to IST (+5:30)
   try {
     const d = new Date(val);
     if (isNaN(d)) return val;
-    // Extract hours/minutes/seconds from UTC
-    let h = d.getUTCHours();
-    const m = String(d.getUTCMinutes()).padStart(2,"0");
-    const s = String(d.getUTCSeconds()).padStart(2,"0");
+    // Add 5 hours 30 minutes for IST
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    const ist = new Date(d.getTime() + istOffset);
+    let h = ist.getUTCHours();
+    const m = String(ist.getUTCMinutes()).padStart(2,"0");
+    const s = String(ist.getUTCSeconds()).padStart(2,"0");
     const ampm = h >= 12 ? "PM" : "AM";
     h = h % 12 || 12;
     return `${h}:${m}:${s} ${ampm}`;
