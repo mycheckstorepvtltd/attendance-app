@@ -294,6 +294,25 @@ async function loadAttendance() {
   }
 }
 
+// ── Format time — handles both "11:22:05 AM" and "1899-12-30T06:00:55.000Z" ──
+function formatTime(val) {
+  if (!val) return "—";
+  // Already clean format like "11:22 AM"
+  if (typeof val === "string" && val.includes(":") && !val.includes("T")) return val;
+  // Google Sheets date serial or ISO string
+  try {
+    const d = new Date(val);
+    if (isNaN(d)) return val;
+    // Extract hours/minutes/seconds from UTC
+    let h = d.getUTCHours();
+    const m = String(d.getUTCMinutes()).padStart(2,"0");
+    const s = String(d.getUTCSeconds()).padStart(2,"0");
+    const ampm = h >= 12 ? "PM" : "AM";
+    h = h % 12 || 12;
+    return `${h}:${m}:${s} ${ampm}`;
+  } catch(e) { return val; }
+}
+
 function renderAttendance(records) {
   const el = document.getElementById("attendanceBody");
   if (!records.length) { el.innerHTML = `<div class="empty">No records found.</div>`; return; }
@@ -304,8 +323,8 @@ function renderAttendance(records) {
       <tr>
         <td><strong>${r.name}</strong></td>
         <td>${r.date}</td>
-        <td>${r.checkin || "—"}</td>
-        <td>${r.checkout || "—"}</td>
+        <td>${formatTime(r.checkin)}</td>
+        <td>${formatTime(r.checkout)}</td>
         <td>${r.office || "—"}</td>
         <td><span class="badge ${r.checkout ? 'badge-out' : 'badge-in'}">${r.checkout ? "Complete" : "Checked In"}</span></td>
       </tr>`).join("")}
