@@ -382,10 +382,23 @@ async function doAttendance(type) {
     const data = await res.json();
 
     if (data.status === "ok") {
+      const displayTime = now.toLocaleTimeString("en-IN", {hour12:true}).toUpperCase();
       showToast(type === "checkin"
-        ? `✅ Checked in at ${payload.time}`
-        : `👋 Checked out at ${payload.time}`, "success");
-      await loadTodayStatus();
+        ? `✅ Checked in at ${displayTime}`
+        : `👋 Checked out at ${displayTime}`, "success");
+      // Update UI directly from phone time — no need to re-read from sheet
+      if (type === "checkin") {
+        document.getElementById("todayIn").textContent = displayTime;
+        document.getElementById("todayIn").className = "status-value active";
+        document.getElementById("todayOffice").textContent = nearbyOffice.name;
+        document.getElementById("todayOffice").className = "status-value done";
+        todayStatus.checkin = displayTime;
+      } else {
+        document.getElementById("todayOut").textContent = displayTime;
+        document.getElementById("todayOut").className = "status-value done";
+        todayStatus.checkout = displayTime;
+      }
+      updateButtons();
     } else {
       showToast(data.message || "Something went wrong", "error");
     }
